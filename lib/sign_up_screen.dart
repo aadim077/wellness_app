@@ -1,149 +1,160 @@
+// lib/screens/signup_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:wellness/login_screen.dart'; // Import for navigation
-import 'package:wellness/user_preference_selection_screen.dart'; // Import for navigation
+import 'package:firebase_auth/firebase_auth.dart'; // For FirebaseAuthException
+import 'package:wellness/auth_service.dart'; // Import your AuthService
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({Key? key}) : super(key: key);
+  const SignUpScreen({super.key});
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  bool _rememberMe = false;
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
+
+  // Function to handle user sign up
+  Future<void> _signUp() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      try {
+        await _authService.signUpWithEmail(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        );
+        // Show success message and navigate back to login
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration Successful! Please login.')),
+        );
+        Navigator.of(context).pop(); // Go back to login screen
+      } on FirebaseAuthException catch (e) {
+        // Handle specific Firebase authentication errors
+        String message = 'An unknown error occurred.';
+        if (e.code == 'weak-password') {
+          message = 'The password provided is too weak.';
+        } else if (e.code == 'email-already-in-use') {
+          message = 'The account already exists for that email.';
+        } else if (e.code == 'invalid-email') {
+          message = 'The email address is not valid.';
+        } else if (e.code == 'network-request-failed') {
+          message = 'Network error. Please check your internet connection.';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 0, // Hides the AppBar
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 24.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(height: 80.h),
-            Text(
-              'Start your wellness\njourney today.',
-              style: Theme.of(context).textTheme.headlineLarge,
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 40.h),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Enter your name',
-                prefixIcon: Icon(Icons.person, color: Colors.grey),
-              ),
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            SizedBox(height: 16.h),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Enter your email',
-                prefixIcon: Icon(Icons.email, color: Colors.grey),
-              ),
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            SizedBox(height: 16.h),
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: 'Enter your password',
-                prefixIcon: Icon(Icons.lock, color: Colors.grey),
-                suffixIcon: Icon(Icons.visibility_off, color: Colors.grey),
-              ),
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            SizedBox(height: 16.h),
-            Row(
-              children: [
-                Checkbox(
-                  value: _rememberMe,
-                  onChanged: (bool? value) {
-                    setState(() {
-                      _rememberMe = value ?? false;
-                    });
-                  },
-                  fillColor: WidgetStateProperty.all(Theme.of(context).colorScheme.secondary),
-                  checkColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
-                ),
-                Text(
-                  'Remember me',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            SizedBox(height: 24.h),
-            ElevatedButton(
-              onPressed: () {
-                // TODO: Implement Sign Up logic
-                print('Sign up button tapped');
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const UserPreferenceScreen()),
-                );
-              },
-              child: Text('Sign up'),
-            ),
-            SizedBox(height: 24.h),
-            Row(
-              children: [
-                Expanded(child: Divider(color: Colors.grey.withOpacity(0.5))),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w),
-                  child: Text(
-                    'Or',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-                Expanded(child: Divider(color: Colors.grey.withOpacity(0.5))),
-              ],
-            ),
-            SizedBox(height: 24.h),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Implement Google sign up
-                print('Google sign up tapped');
-              },
-              icon: SvgPicture.asset(
-                'assets/icons/google.svg',
-                height: 24.h,
-                width: 24.w,
-                colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
-              ),
-              label: Text('G Google'),
-            ),
-            SizedBox(height: 40.h),
-            Row(
+      appBar: AppBar(title: const Text('Sign Up')),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "Already have an account? ",
-                  style: Theme.of(context).textTheme.bodyMedium,
+                // Email input field
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    hintText: 'Enter your email',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!value.contains('@') || !value.contains('.')) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
                 ),
+                const SizedBox(height: 16),
+                // Password input field
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    hintText: 'Enter a strong password',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a password';
+                    }
+                    if (value.length < 8) {
+                      return 'Password must be at least 8 characters long';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Confirm Password input field
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm Password',
+                    hintText: 'Re-enter your password',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please confirm your password';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                // Sign Up button or loading indicator
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                  onPressed: _signUp,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  child: const Text('Sign Up'),
+                ),
+                const SizedBox(height: 16),
+                // Button to go back to Login screen
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    );
+                    Navigator.of(context).pop(); // Go back to login
                   },
-                  child: Text(
-                    'Login',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.blueAccent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: const Text("Already have an account? Login"),
                 ),
               ],
             ),
-            SizedBox(height: 24.h),
-          ],
+          ),
         ),
       ),
     );

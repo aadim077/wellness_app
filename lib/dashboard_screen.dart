@@ -1,181 +1,140 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:wellness/profile_screen.dart';
-import 'package:wellness/quotes_detail_screen.dart';
+import 'package:wellness/auth_service.dart';
+import 'package:wellness/change_password_screen.dart';
+import 'package:wellness/add_category_screen.dart';
+import 'package:wellness/add_quote.dart';
+import 'package:wellness/add_health_tips_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key, required dashboardViewModel});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Explore',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontSize: 28.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 16.w),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                );
-              },
-              child: CircleAvatar(
-                radius: 20.r,
-                backgroundImage: CachedNetworkImageProvider(
-                  'https://placehold.co/100x100/000000/FFFFFF/png?text=User',
+  Future<void> _logout(BuildContext context) async {
+    final AuthService _authService = AuthService(); // Local instantiation
+    await _authService.signOut();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Logged out successfully.')),
+    );
+  }
 
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 24.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDashboardCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    VoidCallback? onAddNew,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      color: Colors.black87,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            SizedBox(height: 20.h),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      print('My favorites tapped');
-                    },
-                    icon: Icon(Icons.favorite_border, size: 20.sp),
-                    label: Text('My favorites'),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
+                Row(
+                  children: [
+                    Icon(icon, size: 30, color: Colors.blueAccent),
+                    const SizedBox(width: 12),
+                    Text(
+                      title,
+                      style: const TextStyle(fontSize: 18, color: Colors.white70),
                     ),
-                  ),
+                  ],
                 ),
-                SizedBox(width: 16.w),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      print('Remind Me tapped');
-                    },
-                    icon: Icon(Icons.notifications_none, size: 20.sp),
-                    label: Text('Remind Me'),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                    ),
-                  ),
+                const SizedBox(height: 10),
+                Text(
+                  value,
+                  style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               ],
             ),
-            SizedBox(height: 30.h),
-            Text(
-              "Today's Quotes",
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            SizedBox(height: 16.h),
-            Container(
-              padding: EdgeInsets.all(20.w),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            if (onAddNew != null)
+              Column(
                 children: [
-                  Text(
-                    '"Your wellness is an investment,\nnot an expense."',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontStyle: FontStyle.italic,
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle, color: Colors.blueAccent, size: 30),
+                    onPressed: onAddNew,
+                    tooltip: 'Add New',
                   ),
-                  SizedBox(height: 10.h),
-                  Text(
-                    '- Author Name',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  const Text('Add New', style: TextStyle(color: Colors.white70, fontSize: 12)),
                 ],
               ),
-            ),
-            SizedBox(height: 30.h),
-            Text(
-              'Quotes',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            SizedBox(height: 16.h),
-            _buildQuoteCategoryTile(context, 'Feeling blessed', Icons.wb_sunny_outlined),
-            SizedBox(height: 10.h),
-            _buildQuoteCategoryTile(context, 'Pride Month', Icons.favorite_border),
-            SizedBox(height: 10.h),
-            _buildQuoteCategoryTile(context, 'Self-worth', Icons.star_border),
-            SizedBox(height: 10.h),
-            _buildQuoteCategoryTile(context, 'Love', Icons.favorite_outline),
-            SizedBox(height: 30.h),
-            Text(
-              'Health Tips',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            SizedBox(height: 16.h),
-            _buildHealthTipTile(context, 'Breathe to Reset', Icons.wb_sunny_outlined),
-            SizedBox(height: 24.h),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildQuoteCategoryTile(BuildContext context, String title, IconData iconData) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
-        borderRadius: BorderRadius.circular(12.r),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.vpn_key_sharp, color: Colors.white),
+            tooltip: 'Change Password',
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => const ChangePasswordScreen(),
+              ));
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: 'Logout',
+            onPressed: () => _logout(context),
+          ),
+        ],
       ),
-      child: ListTile(
-        leading: Icon(iconData, color: Colors.white, size: 24.sp),
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.bodyLarge,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildDashboardCard(
+              icon: Icons.people,
+              title: 'Total Users',
+              value: '1488888',
+            ),
+            _buildDashboardCard(
+              icon: Icons.category,
+              title: 'Total Category',
+              value: '100',
+              onAddNew: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const AddCategoryScreen(),
+                ));
+              },
+            ),
+            _buildDashboardCard(
+              icon: Icons.format_quote,
+              title: 'Total Quotes',
+              value: '200',
+              onAddNew: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const AddQuoteScreen(),
+                ));
+              },
+            ),
+            _buildDashboardCard(
+              icon: Icons.health_and_safety,
+              title: 'Total Health Tips',
+              value: '50',
+              onAddNew: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const AddHealthTipsScreen(),
+                ));
+              },
+            ),
+          ],
         ),
-        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18.sp),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const QuotesDetailScreen()),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildHealthTipTile(BuildContext context, String title, IconData iconData) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: ListTile(
-        leading: Icon(iconData, color: Colors.white, size: 24.sp),
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18.sp),
-        onTap: () {
-          // TODO: Navigate to Health Tip detail screen
-          print('$title tapped');
-        },
       ),
     );
   }
