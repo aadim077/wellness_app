@@ -1,30 +1,44 @@
-name: wellness
-description: A new Flutter project for User Authentication Assignment.
-publish_to: 'none'
+name: wellness # Updated name as per your request
+description: A new Flutter project for User Authentication and Firestore Integration. # Kept your description and added Firestore context
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0' # Adjust SDK version if needed, ensure it's compatible with your Flutter SDK
 
 dependencies:
   flutter:
     sdk: flutter
-  dio: ^5.4.0
 
-  # Firebase Core and Authentication
-  firebase_core: ^2.27.0
-  firebase_auth: ^4.17.8
+  dio: ^5.4.0 # <--- Added: HTTP client for making network requests
 
-  # Google Sign-In
-  google_sign_in: ^6.2.1
+  # Firebase Core: Essential for any Firebase service
+  firebase_core: ^2.27.0 # Use the latest stable version
 
+  # Firebase Authentication: For email/password and Google Sign-In
+  firebase_auth: ^4.17.8 # Use the latest stable version
+
+  # Cloud Firestore: For database operations (categories, preferences, tips, quotes, favorites)
+  cloud_firestore: ^4.15.8 # <--- IMPORTANT: Retained for Firestore assignment
+
+  # Google Sign-In: For Google authentication flow (optional, but included)
+  google_sign_in: ^6.2.1 # Use the latest stable version
+
+  # Cupertino Icons: For iOS-style icons (often included by default)
   cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # Linting rules for Flutter projects
   flutter_lints: ^2.0.0
 
+# The following section is specific to Flutter.
 flutter:
   uses-material-design: true
+
+  # To add assets to your application, add an assets section like this:
+  # assets:
+  #   - assets/google_logo.png # Uncomment and add if you use a Google logo image for sign-in

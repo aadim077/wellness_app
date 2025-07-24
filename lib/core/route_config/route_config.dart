@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wellness/core/route_config/routes_name.dart';
-import 'package:wellness/dashboard_screen.dart';
-import 'package:wellness/login_screen.dart';
+import 'package:wellness/screens/dashboard_screen.dart';
+import 'package:wellness/screens/login_screen.dart';
 
 // Add this import if not already present
 import 'package:wellness/core/route_config/routes_name.dart';

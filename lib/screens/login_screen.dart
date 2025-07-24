@@ -1,9 +1,9 @@
 // lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // For FirebaseAuthException
-import 'package:wellness/auth_service.dart'; // Import your AuthService
-import 'package:wellness/sign_up_screen.dart';
-import 'package:wellness/forgot_password_screen.dart';
+import 'package:wellness/services/auth_service.dart'; // Import your AuthService
+import 'package:wellness/screens/sign_up_screen.dart';
+import 'package:wellness/screens/forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

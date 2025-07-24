@@ -1,7 +1,7 @@
 // lib/screens/forgot_password_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // For FirebaseAuthException
-import 'package:wellness/auth_service.dart'; // Import your AuthService
+import 'package:wellness/services/auth_service.dart'; // Import your AuthService
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});

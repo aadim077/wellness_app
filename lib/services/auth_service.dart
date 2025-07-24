@@ -1,34 +1,50 @@
-// lib/services/auth_service.dart
+// lib/services/auth_service.dart (WITH DEBUG PRINTS)
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:wellness/services/firestore_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirestoreService _firestoreService = FirestoreService();
 
-  // Stream to listen to authentication state changes
-  // This will emit a User object if logged in, or null if logged out.
   Stream<User?> get user {
     return _auth.authStateChanges();
   }
 
+  String? get currentUserId => _auth.currentUser?.uid;
+
   // 1. Email and Password Sign Up
-  Future<UserCredential?> signUpWithEmail(String email, String password) async {
+  Future<UserCredential?> signUpWithEmail(String email, String password, String name) async {
     try {
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      print('AuthService: User signed up with email: ${userCredential.user?.email}');
+
+      if (userCredential.user != null) {
+        print('AuthService: User object is NOT null. Attempting to create Firestore profile...');
+        await _firestoreService.createUserProfile(
+          userCredential.user!.uid,
+          email,
+          name,
+          'customer',
+        );
+        print('AuthService: createUserProfile call completed.');
+      } else {
+        print('AuthService: User object IS null after sign up. Profile not created.');
+      }
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      // Re-throw the exception to be caught and handled in the UI
+      print('AuthService: FirebaseAuthException during sign up: ${e.code} - ${e.message}');
       rethrow;
     } catch (e) {
-      print('Sign Up Error: $e');
+      print('AuthService: Generic Sign Up Error: $e');
       return null;
     }
   }
 
-  // 2. Email and Password Login
+  // 2. Email and Password Login (no change needed here for Firestore)
   Future<UserCredential?> signInWithEmail(String email, String password) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
@@ -37,7 +53,6 @@ class AuthService {
       );
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      // Re-throw the exception to be caught and handled in the UI
       rethrow;
     } catch (e) {
       print('Sign In Error: $e');
@@ -45,19 +60,18 @@ class AuthService {
     }
   }
 
-  // 3. Forgot Password / Send Password Reset Email
+  // 3. Forgot Password / Send Password Reset Email (no change needed)
   Future<void> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      // Re-throw the exception to be caught and handled in the UI
       rethrow;
     } catch (e) {
       print('Send Password Reset Email Error: $e');
     }
   }
 
-  // 4. Change Password (requires re-authentication if session is old)
+  // 4. Change Password (no change needed)
   Future<void> changePassword(String currentPassword, String newPassword) async {
     User? user = _auth.currentUser;
     if (user == null) {
@@ -65,28 +79,23 @@ class AuthService {
     }
 
     try {
-      // Re-authenticate the user first for security
       AuthCredential credential = EmailAuthProvider.credential(
-        email: user.email!, // Assuming email is available and user signed in with email
+        email: user.email!,
         password: currentPassword,
       );
       await user.reauthenticateWithCredential(credential);
-
-      // Update the password
       await user.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {
-      // Re-throw the exception to be caught and handled in the UI
       rethrow;
     } catch (e) {
       print('Change Password Error: $e');
     }
   }
 
-  // 5. Logout
+  // 5. Logout (no change needed)
   Future<void> signOut() async {
     try {
       await _auth.signOut();
-      // Also sign out from Google if the user signed in with Google
       if (await GoogleSignIn().isSignedIn()) {
         await GoogleSignIn().signOut();
       }
@@ -95,33 +104,40 @@ class AuthService {
     }
   }
 
-  // Optional: Google Sign-In (as per previous discussion)
+  // Optional: Google Sign-In (updated to create user profile)
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-
-      // If user cancelled, googleUser will be null
       if (googleUser == null) {
+        print('AuthService: Google sign-in cancelled.');
         return null;
       }
-
-      // Obtain the auth details from the request
       final GoogleSignInAuthentication? googleAuth = await googleUser.authentication;
-
-      // Create a new credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth?.accessToken,
         idToken: googleAuth?.idToken,
       );
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
 
-      // Once signed in, return the UserCredential
-      return await _auth.signInWithCredential(credential);
+      print('AuthService: User signed in with Google: ${userCredential.user?.email}');
+      if (userCredential.user != null && userCredential.user!.displayName != null) {
+        print('AuthService: User object is NOT null. Attempting to create Firestore profile for Google user...');
+        await _firestoreService.createUserProfile(
+          userCredential.user!.uid,
+          userCredential.user!.email ?? '',
+          userCredential.user!.displayName!,
+          'customer',
+        );
+        print('AuthService: createUserProfile call completed for Google user.');
+      } else {
+        print('AuthService: User object IS null after Google sign-in. Profile not created.');
+      }
+      return userCredential;
     } on FirebaseAuthException catch (e) {
-      // Re-throw the exception to be caught and handled in the UI
+      print('AuthService: FirebaseAuthException during Google sign-in: ${e.code} - ${e.message}');
       rethrow;
     } catch (e) {
-      print("Google authentication error: $e");
+      print("AuthService: Generic Google authentication error: $e");
       return null;
     }
   }

@@ -1,7 +1,7 @@
 // lib/screens/change_password_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // For FirebaseAuthException
-import 'package:wellness/auth_service.dart'; // Import your AuthService
+import 'package:wellness/services/auth_service.dart'; // Import your AuthService
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});

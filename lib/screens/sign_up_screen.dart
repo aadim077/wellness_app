@@ -1,7 +1,7 @@
-// lib/screens/signup_screen.dart
+// lib/screens/signup_screen.dart (UPDATED - Corrected Navigation)
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // For FirebaseAuthException
-import 'package:wellness/auth_service.dart'; // Import your AuthService
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:wellness/services/auth_service.dart'; // Ensure this uses 'wellness' package name
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -12,13 +12,13 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController(); // Name controller
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
-  // Function to handle user sign up
   Future<void> _signUp() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -28,14 +28,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
         await _authService.signUpWithEmail(
           _emailController.text.trim(),
           _passwordController.text.trim(),
+          _nameController.text.trim(), // Pass the name
         );
-        // Show success message and navigate back to login
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration Successful! Please login.')),
+          const SnackBar(content: Text('Registration Successful!')), // Changed message slightly
         );
-        Navigator.of(context).pop(); // Go back to login screen
+        // REMOVED: Navigator.of(context).pop();
+        // The AuthWrapper will now automatically handle navigation based on auth state.
+        // If the user is newly signed up, AuthWrapper will direct to PreferenceSelectionScreen.
       } on FirebaseAuthException catch (e) {
-        // Handle specific Firebase authentication errors
         String message = 'An unknown error occurred.';
         if (e.code == 'weak-password') {
           message = 'The password provided is too weak.';
@@ -59,6 +60,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -77,7 +79,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Email input field
+                TextFormField(
+                  controller: _nameController,
+                  keyboardType: TextInputType.text,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    hintText: 'Enter your name',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -96,7 +112,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Password input field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
@@ -115,7 +130,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Confirm Password input field
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: true,
@@ -134,7 +148,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 24),
-                // Sign Up button or loading indicator
                 _isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
@@ -145,10 +158,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: const Text('Sign Up'),
                 ),
                 const SizedBox(height: 16),
-                // Button to go back to Login screen
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Go back to login
+                    Navigator.of(context).pop();
                   },
                   child: const Text("Already have an account? Login"),
                 ),
